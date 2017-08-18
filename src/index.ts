@@ -93,7 +93,7 @@ export interface SetupSocketIOControllersOptions {
 	server: http.Server;
 	controllers: {
 		dir: string;
-		suffix: string;
+		suffix?: string;
 	};
 }
 
