@@ -13,6 +13,10 @@
     "socket.io-controllers",
     "socket-controller"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BruceHem/socket.io-controllers.git"
+  },
   "author": "Bruce Hem <bruce.hem@pathmazing.com>",
   "license": "MIT",
   "dependencies": {
