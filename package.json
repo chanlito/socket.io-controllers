@@ -1,0 +1,31 @@
+{
+  "name": "socket.io-controllers",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "socket.io",
+    "es6-class",
+    "socket.io-controllers",
+    "socket-controller"
+  ],
+  "author": "Bruce Hem <bruce.hem@pathmazing.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@types/debug": "0.0.30",
+    "@types/lodash": "^4.14.73",
+    "@types/node": "^8.0.24",
+    "@types/socket.io": "^1.4.29",
+    "debug": "^3.0.0",
+    "lodash": "^4.17.4",
+    "socket.io": "^2.0.3"
+  },
+  "devDependencies": {
+    "tslint": "^5.6.0",
+    "typescript": "^2.4.2"
+  }
+}
