@@ -20,43 +20,49 @@ export function setupSocketIOControllers(options: SetupSocketIOControllersOption
 
 	fs.readdirSync(dir).filter((ctrl) => ctrl.indexOf(suffix) > -1).forEach((ctrl) => {
 		const importedCtrl = require(`${dir}/${ctrl}`);
+		log('importedCtrl', importedCtrl);
 		const InstanceName = _.keys(importedCtrl)[0];
 		const InstanceStatic: any = _.values(importedCtrl)[0];
 
-		let [ namespace ] = InstanceName.toLocaleLowerCase().split('socketcontroller');
-		if (namespace === 'default') namespace = '';
-		log('namespace', namespace);
+		if (InstanceName && InstanceStatic) {
+			let [ namespace ] = InstanceName.toLocaleLowerCase().split('socketcontroller');
+			if (namespace === 'default') namespace = '';
+			log('namespace', namespace);
 
-		const instance = new InstanceStatic();
-		const instanceFuncNames = Object.getOwnPropertyNames(InstanceStatic.prototype).filter(
-			(fn) => fn !== 'constructor' && fn.indexOf('on') > -1
-		);
+			const instance = new InstanceStatic();
+			const instanceFuncNames = Object.getOwnPropertyNames(InstanceStatic.prototype).filter(
+				(fn) => fn !== 'constructor' && fn.indexOf('on') > -1
+			);
 
-		const eventNames = instanceFuncNames.map((fn) => fn.split(/on(.+)/)[1]);
-		const builtInIoEventNames = [ 'connection', 'Connection' ];
-		const builtInSocketEventNames = [ 'disconnect', 'disconnecting', 'error' ];
-		const builtInSocketEventNamesCap = builtInSocketEventNames.map((e) => capitalize(e));
-		const socketEventNames = _.difference(eventNames, [ ...builtInIoEventNames, ...builtInSocketEventNamesCap ]);
+			const eventNames = instanceFuncNames.map((fn) => fn.split(/on(.+)/)[1]);
+			const builtInIoEventNames = [ 'connection', 'Connection' ];
+			const builtInSocketEventNames = [ 'disconnect', 'disconnecting', 'error' ];
+			const builtInSocketEventNamesCap = builtInSocketEventNames.map((e) => capitalize(e));
+			const socketEventNames = _.difference(eventNames, [
+				...builtInIoEventNames,
+				...builtInSocketEventNamesCap
+			]);
 
-		if (!instance.onConnection) {
-			throw new Error(`${InstanceStatic.name} doesn't implement onConnection function`);
+			if (!instance.onConnection) {
+				throw new Error(`${InstanceStatic.name} doesn't implement onConnection function. Did you forget to extend SocketController class?`);
+			}
+
+			if (instance.use) io.of(namespace).use((socket, next) => instance.use.call({ io, socket, next }));
+
+			io.of(namespace).on('connection', (socket) => {
+				const context = { io, socket };
+
+				instance.onConnection.call(context, socket);
+
+				for (let e of builtInSocketEventNames) {
+					socket.on(e, (payload, fn) => instance[`on${capitalize(e)}`].call(context, payload, fn));
+				}
+
+				for (let e of socketEventNames) {
+					socket.on(e, (payload, fn) => instance[`on${e}`].call(context, payload, fn));
+				}
+			});
 		}
-
-		if (instance.use) io.of(namespace).use((socket, next) => instance.use.call({ io, socket, next }));
-
-		io.of(namespace).on('connection', (socket) => {
-			const context = { io, socket };
-
-			instance.onConnection.call(context, socket);
-
-			for (let e of builtInSocketEventNames) {
-				socket.on(e, (payload, fn) => instance[`on${capitalize(e)}`].call(context, payload, fn));
-			}
-
-			for (let e of socketEventNames) {
-				socket.on(e, (payload, fn) => instance[`on${e}`].call(context, payload, fn));
-			}
-		});
 	});
 
 	return io;
